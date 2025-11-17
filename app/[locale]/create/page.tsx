@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { Header } from '@/components/Header'
@@ -10,9 +10,10 @@ import { Textarea } from '@/components/ui/Textarea'
 import { t, Locale } from '@/lib/i18n/translations'
 import { generateFingerprint } from '@/lib/utils/fingerprint'
 
-export default function CreateEventPage({ params }: { params: { locale: Locale } }) {
+export default function CreateEventPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const router = useRouter()
-  const locale = params.locale || 'mn'
+  const { locale } = use(params)
+  const currentLocale = locale || 'mn'
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -66,7 +67,7 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
       }
 
       // Redirect to event page
-      router.push(`/${locale}/e/${data.eventId}?edit=${data.editToken}`)
+      router.push(`/${currentLocale}/e/${data.eventId}?edit=${data.editToken}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -81,14 +82,14 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-            {t('home.hero.cta', locale)}
+            {t('home.hero.cta', currentLocale)}
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <Input
-              label={t('event.form.title', locale)}
-              placeholder={t('event.form.titlePlaceholder', locale)}
+              label={t('event.form.title', currentLocale)}
+              placeholder={t('event.form.titlePlaceholder', currentLocale)}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -97,8 +98,8 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
 
             {/* Description */}
             <Textarea
-              label={t('event.form.description', locale)}
-              placeholder={t('event.form.descriptionPlaceholder', locale)}
+              label={t('event.form.description', currentLocale)}
+              placeholder={t('event.form.descriptionPlaceholder', currentLocale)}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
@@ -107,8 +108,8 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
 
             {/* Location */}
             <Input
-              label={t('event.form.location', locale)}
-              placeholder={t('event.form.locationPlaceholder', locale)}
+              label={t('event.form.location', currentLocale)}
+              placeholder={t('event.form.locationPlaceholder', currentLocale)}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               maxLength={500}
@@ -116,8 +117,8 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
 
             {/* Owner Name */}
             <Input
-              label={t('event.form.ownerName', locale)}
-              placeholder={t('event.form.ownerNamePlaceholder', locale)}
+              label={t('event.form.ownerName', currentLocale)}
+              placeholder={t('event.form.ownerNamePlaceholder', currentLocale)}
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
               maxLength={100}
@@ -126,7 +127,7 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
             {/* Dates */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                {t('event.form.dates', locale)} <span className="text-red-500">*</span>
+                {t('event.form.dates', currentLocale)} <span className="text-red-500">*</span>
               </label>
 
               <div className="space-y-2">
@@ -159,7 +160,7 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
                 onClick={addDate}
                 className="mt-3"
               >
-                + {t('event.form.addDate', locale)}
+                + {t('event.form.addDate', currentLocale)}
               </Button>
             </div>
 
@@ -177,14 +178,14 @@ export default function CreateEventPage({ params }: { params: { locale: Locale }
                 onClick={() => router.back()}
                 className="flex-1"
               >
-                {t('event.form.cancel', locale)}
+                {t('event.form.cancel', currentLocale)}
               </Button>
               <Button
                 type="submit"
                 disabled={loading || !title || dates.length === 0}
                 className="flex-1"
               >
-                {loading ? t('common.loading', locale) : t('event.form.submit', locale)}
+                {loading ? t('common.loading', currentLocale) : t('event.form.submit', currentLocale)}
               </Button>
             </div>
           </form>

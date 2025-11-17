@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const defaultLocale = 'mn'
+const locales = ['mn', 'en']
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Check if the pathname already has a locale
-  const pathnameHasLocale = pathname.startsWith('/mn') || pathname.startsWith('/en')
-
-  if (pathnameHasLocale) {
-    return NextResponse.next()
-  }
 
   // Skip for API routes, static files, and Next.js internals
   if (
@@ -20,10 +16,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect to default locale (Mongolian)
-  const locale = 'mn'
-  request.nextUrl.pathname = `/${locale}${pathname}`
-  return NextResponse.redirect(request.nextUrl)
+  // Check if pathname starts with a locale
+  const pathnameLocale = locales.find(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  )
+
+  if (pathnameLocale) {
+    // If it's the default locale in the URL, redirect to remove it
+    if (pathnameLocale === defaultLocale) {
+      const newPathname = pathname.replace(`/${defaultLocale}`, '') || '/'
+      request.nextUrl.pathname = newPathname
+      return NextResponse.redirect(request.nextUrl)
+    }
+    // For non-default locales (e.g., /en), just continue
+    return NextResponse.next()
+  }
+
+  // For paths without locale prefix, rewrite to default locale (mn) internally
+  // This keeps the URL clean (no /mn) but Next.js sees it as /mn/...
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`
+  return NextResponse.rewrite(request.nextUrl)
 }
 
 export const config = {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { GridCell } from '@/components/ui/GridCell'
-import { t, Locale } from '@/lib/i18n/translations'
+import { t } from '@/lib/i18n/translations'
+import { getLocalePath, type Locale } from '@/lib/i18n/locale'
 import { generateFingerprint } from '@/lib/utils/fingerprint'
 
 type CellStatus = '' | 'yes' | 'maybe'
@@ -32,11 +33,12 @@ interface Event {
 export default function EventPage({
   params,
 }: {
-  params: { locale: Locale; eventId: string }
+  params: Promise<{ locale: Locale; eventId: string }>
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const locale = params.locale || 'mn'
+  const { locale, eventId } = use(params)
+  const currentLocale = locale || 'mn'
   const editToken = searchParams?.get('edit')
 
   const [event, setEvent] = useState<Event | null>(null)
@@ -54,11 +56,11 @@ export default function EventPage({
     if (editToken) {
       verifyEditAccess()
     }
-  }, [params.eventId, editToken])
+  }, [eventId, editToken])
 
   const loadEvent = async () => {
     try {
-      const response = await fetch(`/api/events/${params.eventId}`)
+      const response = await fetch(`/api/events/${eventId}`)
       const data = await response.json()
 
       if (!response.ok) throw new Error(data.error)
@@ -76,7 +78,7 @@ export default function EventPage({
 
     try {
       const fingerprint = generateFingerprint()
-      const response = await fetch(`/api/events/${params.eventId}/verify-access`, {
+      const response = await fetch(`/api/events/${eventId}/verify-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ editToken, fingerprint }),
@@ -109,7 +111,7 @@ export default function EventPage({
           status,
         }))
 
-      const response = await fetch(`/api/events/${params.eventId}/responses`, {
+      const response = await fetch(`/api/events/${eventId}/responses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +126,7 @@ export default function EventPage({
       if (!response.ok) throw new Error(data.error)
 
       // Redirect to results page
-      router.push(`/${locale}/e/${params.eventId}/results`)
+      router.push(`/${currentLocale}/e/${eventId}/results`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit response')
     } finally {
@@ -134,7 +136,7 @@ export default function EventPage({
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link)
-    alert(t('event.share.copied', locale))
+    alert(t('event.share.copied', currentLocale))
   }
 
   if (loading) {
@@ -142,7 +144,7 @@ export default function EventPage({
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">{t('common.loading', locale)}</div>
+          <div className="text-gray-600">{t('common.loading', currentLocale)}</div>
         </div>
       </div>
     )
@@ -163,7 +165,7 @@ export default function EventPage({
 
   if (!event) return null
 
-  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/e/${event.id}`
+  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${currentLocale}/e/${event.id}`
   const editUrl = editToken ? `${shareUrl}?edit=${editToken}` : ''
 
   return (
@@ -175,12 +177,12 @@ export default function EventPage({
         {showShareDialog && editToken && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
             <h2 className="text-xl font-bold text-green-900 mb-4">
-              {t('event.share.title', locale)}
+              {t('event.share.title', currentLocale)}
             </h2>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-green-800 mb-1">
-                  {t('event.share.shareLink', locale)}
+                  {t('event.share.shareLink', currentLocale)}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -190,13 +192,13 @@ export default function EventPage({
                     className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm"
                   />
                   <Button size="sm" onClick={() => copyLink(shareUrl)}>
-                    {t('event.share.copy', locale)}
+                    {t('event.share.copy', currentLocale)}
                   </Button>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-green-800 mb-1">
-                  {t('event.share.editLink', locale)}
+                  {t('event.share.editLink', currentLocale)}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -206,11 +208,11 @@ export default function EventPage({
                     className="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm"
                   />
                   <Button size="sm" onClick={() => copyLink(editUrl)}>
-                    {t('event.share.copy', locale)}
+                    {t('event.share.copy', currentLocale)}
                   </Button>
                 </div>
                 <p className="text-xs text-green-700 mt-1">
-                  {t('event.share.editWarning', locale)}
+                  {t('event.share.editWarning', currentLocale)}
                 </p>
               </div>
             </div>
@@ -232,9 +234,9 @@ export default function EventPage({
               {event.title}
             </h1>
             {editToken && canEdit && (
-              <Link href={`/${locale}/e/${params.eventId}/edit?token=${editToken}`}>
+              <Link href={getLocalePath(`/e/${eventId}/edit?token=${editToken}`, currentLocale)}>
                 <Button variant="secondary" size="sm">
-                  {t('edit.button', locale)}
+                  {t('edit.button', currentLocale)}
                 </Button>
               </Link>
             )}
@@ -247,14 +249,14 @@ export default function EventPage({
           )}
           {event.owner_name && (
             <p className="text-gray-500 text-sm mt-1">
-              {locale === 'mn' ? 'Зохион байгуулагч:' : 'Organizer:'}{' '}
+              {currentLocale === 'mn' ? 'Зохион байгуулагч:' : 'Organizer:'}{' '}
               {event.owner_name}
             </p>
           )}
           {editToken && !canEdit && (
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                ⚠️ {t('edit.restricted', locale)}
+                ⚠️ {t('edit.restricted', currentLocale)}
               </p>
             </div>
           )}
@@ -263,14 +265,14 @@ export default function EventPage({
         {/* Response Form */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {t('response.form.title', locale)}
+            {t('response.form.title', currentLocale)}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <Input
-              label={t('response.form.name', locale)}
-              placeholder={t('response.form.namePlaceholder', locale)}
+              label={t('response.form.name', currentLocale)}
+              placeholder={t('response.form.namePlaceholder', currentLocale)}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -279,7 +281,7 @@ export default function EventPage({
             {/* Availability Grid */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                {t('response.form.availability', locale)}
+                {t('response.form.availability', currentLocale)}
               </label>
 
               <div className="overflow-x-auto">
@@ -303,16 +305,16 @@ export default function EventPage({
 
               {/* Legend */}
               <div className="mt-4 text-sm text-gray-600">
-                {t('response.form.legend', locale)}{' '}
+                {t('response.form.legend', currentLocale)}{' '}
                 <span className="inline-flex items-center gap-4 ml-2">
                   <span className="flex items-center gap-1">
-                    <span className="text-green-600">✓</span> {t('response.form.yes', locale)}
+                    <span className="text-green-600">✓</span> {t('response.form.yes', currentLocale)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="text-yellow-600">?</span> {t('response.form.maybe', locale)}
+                    <span className="text-yellow-600">?</span> {t('response.form.maybe', currentLocale)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="text-gray-400">□</span> {t('response.form.no', locale)}
+                    <span className="text-gray-400">□</span> {t('response.form.no', currentLocale)}
                   </span>
                 </span>
               </div>
@@ -320,8 +322,8 @@ export default function EventPage({
 
             {/* Comment */}
             <Textarea
-              label={t('response.form.comment', locale)}
-              placeholder={t('response.form.commentPlaceholder', locale)}
+              label={t('response.form.comment', currentLocale)}
+              placeholder={t('response.form.commentPlaceholder', currentLocale)}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={2}
@@ -340,17 +342,17 @@ export default function EventPage({
               className="w-full"
               size="lg"
             >
-              {submitting ? t('common.loading', locale) : t('response.form.submit', locale)}
+              {submitting ? t('common.loading', currentLocale) : t('response.form.submit', currentLocale)}
             </Button>
           </form>
 
           {/* View Results Link */}
           <div className="mt-6 text-center">
             <a
-              href={`/${locale}/e/${event.id}/results`}
+              href={getLocalePath(`/e/${event.id}/results`, currentLocale)}
               className="text-primary hover:underline text-sm"
             >
-              {t('results.title', locale)} →
+              {t('results.title', currentLocale)} →
             </a>
           </div>
         </div>

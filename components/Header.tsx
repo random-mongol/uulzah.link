@@ -2,15 +2,24 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { getLocalePath, getLocaleFromPath, type Locale } from '@/lib/i18n/locale'
 
 export function Header() {
   const router = useRouter()
   const pathname = usePathname()
-  const currentLocale = pathname?.startsWith('/en') ? 'en' : 'mn'
+  const currentLocale = getLocaleFromPath(pathname || '/')
 
   const toggleLocale = () => {
-    const newLocale = currentLocale === 'mn' ? 'en' : 'mn'
-    const newPath = pathname?.replace(/^\/(mn|en)/, `/${newLocale}`) || `/${newLocale}`
+    const newLocale: Locale = currentLocale === 'mn' ? 'en' : 'mn'
+
+    // Remove current locale prefix if exists
+    let pathWithoutLocale = pathname || '/'
+    if (pathname?.startsWith('/en/')) {
+      pathWithoutLocale = pathname.replace('/en', '') || '/'
+    }
+
+    // Add new locale prefix using helper
+    const newPath = getLocalePath(pathWithoutLocale, newLocale)
     router.push(newPath)
   }
 
@@ -18,7 +27,7 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href={`/${currentLocale}`} className="flex items-center">
+          <Link href={getLocalePath('/', currentLocale)} className="flex items-center">
             <span className="text-2xl font-bold text-primary">uulzah.link</span>
           </Link>
 

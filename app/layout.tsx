@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { LocaleHandler } from '@/components/LocaleHandler'
 import './globals.css'
 
 const inter = Inter({
@@ -19,8 +20,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="mn" className={inter.variable}>
-      <body className="min-h-screen">{children}</body>
+    <html lang="mn" className={inter.variable} suppressHydrationWarning>
+      <body className="min-h-screen" suppressHydrationWarning>
+        <LocaleHandler />
+        {children}
+      </body>
     </html>
   )
 }

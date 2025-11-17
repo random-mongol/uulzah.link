@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/Button'
-import { t, Locale } from '@/lib/i18n/translations'
+import { t } from '@/lib/i18n/translations'
+import { getLocalePath, type Locale } from '@/lib/i18n/locale'
 
-export default function HomePage({ params }: { params: { locale: Locale } }) {
-  const locale = params.locale || 'mn'
+export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params
+  const currentLocale = locale || 'mn'
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -14,20 +16,20 @@ export default function HomePage({ params }: { params: { locale: Locale } }) {
       <section className="flex-1 flex items-center justify-center px-4 py-16 sm:py-24">
         <div className="max-w-2xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-            {t('home.hero.title', locale)}
+            {t('home.hero.title', currentLocale)}
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 mb-8">
-            {t('home.hero.subtitle', locale)}
+            {t('home.hero.subtitle', currentLocale)}
           </p>
 
-          <Link href={`/${locale}/create`}>
+          <Link href={getLocalePath('/create', currentLocale)}>
             <Button size="lg" className="w-full sm:w-auto px-12">
-              {t('home.hero.cta', locale)}
+              {t('home.hero.cta', currentLocale)}
             </Button>
           </Link>
 
           <p className="mt-4 text-sm text-gray-500">
-            {t('home.hero.features', locale)}
+            {t('home.hero.features', currentLocale)}
           </p>
         </div>
       </section>
@@ -41,10 +43,10 @@ export default function HomePage({ params }: { params: { locale: Locale } }) {
                 <span className="text-2xl font-bold text-primary">1</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {locale === 'mn' ? 'Үүсгэх' : 'Create'}
+                {currentLocale === 'mn' ? 'Үүсгэх' : 'Create'}
               </h3>
               <p className="text-gray-600 text-sm">
-                {locale === 'mn'
+                {currentLocale === 'mn'
                   ? 'Үйл явдал үүсгэж, боломжит огноонуудыг сонгох'
                   : 'Create an event and select possible dates'}
               </p>
@@ -55,10 +57,10 @@ export default function HomePage({ params }: { params: { locale: Locale } }) {
                 <span className="text-2xl font-bold text-primary">2</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {locale === 'mn' ? 'Хуваалцах' : 'Share'}
+                {currentLocale === 'mn' ? 'Хуваалцах' : 'Share'}
               </h3>
               <p className="text-gray-600 text-sm">
-                {locale === 'mn'
+                {currentLocale === 'mn'
                   ? 'Холбоосыг оролцогчдод хуваалцах'
                   : 'Share the link with participants'}
               </p>
@@ -69,10 +71,10 @@ export default function HomePage({ params }: { params: { locale: Locale } }) {
                 <span className="text-2xl font-bold text-primary">3</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">
-                {locale === 'mn' ? 'Шийдэх' : 'Decide'}
+                {currentLocale === 'mn' ? 'Шийдэх' : 'Decide'}
               </h3>
               <p className="text-gray-600 text-sm">
-                {locale === 'mn'
+                {currentLocale === 'mn'
                   ? 'Хамгийн тохиромжтой цагийг олох'
                   : 'Find the best time that works'}
               </p>

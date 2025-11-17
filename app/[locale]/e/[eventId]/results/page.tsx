@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { t, Locale } from '@/lib/i18n/translations'
+import { t } from '@/lib/i18n/translations'
+import { getLocalePath, type Locale } from '@/lib/i18n/locale'
 
 interface EventDate {
   id: number
@@ -36,9 +37,10 @@ interface Results {
 export default function ResultsPage({
   params,
 }: {
-  params: { locale: Locale; eventId: string }
+  params: Promise<{ locale: Locale; eventId: string }>
 }) {
-  const locale = params.locale || 'mn'
+  const { locale, eventId } = use(params)
+  const currentLocale = locale || 'mn'
 
   const [results, setResults] = useState<Results | null>(null)
   const [loading, setLoading] = useState(true)
@@ -46,11 +48,11 @@ export default function ResultsPage({
 
   useEffect(() => {
     loadResults()
-  }, [params.eventId])
+  }, [eventId])
 
   const loadResults = async () => {
     try {
-      const response = await fetch(`/api/events/${params.eventId}/results`)
+      const response = await fetch(`/api/events/${eventId}/results`)
       const data = await response.json()
 
       if (!response.ok) throw new Error(data.error)
@@ -64,9 +66,9 @@ export default function ResultsPage({
   }
 
   const copyShareLink = () => {
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/e/${params.eventId}`
+    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${currentLocale}/e/${eventId}`
     navigator.clipboard.writeText(shareUrl)
-    alert(t('event.share.copied', locale))
+    alert(t('event.share.copied', currentLocale))
   }
 
   if (loading) {
@@ -74,7 +76,7 @@ export default function ResultsPage({
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">{t('common.loading', locale)}</div>
+          <div className="text-gray-600">{t('common.loading', currentLocale)}</div>
         </div>
       </div>
     )
@@ -86,7 +88,7 @@ export default function ResultsPage({
         <Header />
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error || t('errors.notFound', locale)}
+            {error || t('errors.notFound', currentLocale)}
           </div>
         </div>
       </div>
@@ -114,17 +116,17 @@ export default function ResultsPage({
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span className="font-semibold">{results.totalParticipants}</span>
-              {t('results.summary', locale)}
+              {t('results.summary', currentLocale)}
             </div>
 
             <div className="flex gap-2 ml-auto">
-              <Link href={`/${locale}/e/${params.eventId}`}>
+              <Link href={getLocalePath(`/e/${eventId}`, currentLocale)}>
                 <Button variant="secondary" size="sm">
-                  {t('results.addResponse', locale)}
+                  {t('results.addResponse', currentLocale)}
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={copyShareLink}>
-                {t('results.copyLink', locale)}
+                {t('results.copyLink', currentLocale)}
               </Button>
             </div>
           </div>
@@ -134,7 +136,7 @@ export default function ResultsPage({
         {results.totalParticipants > 0 && (
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {t('results.bestOptions', locale)}
+              {t('results.bestOptions', currentLocale)}
             </h2>
 
             <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-primary">
@@ -163,7 +165,7 @@ export default function ResultsPage({
         {/* Detailed Grid */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {locale === 'mn' ? 'Дэлгэрэнгүй мэдээлэл' : 'Detailed Results'}
+            {currentLocale === 'mn' ? 'Дэлгэрэнгүй мэдээлэл' : 'Detailed Results'}
           </h2>
 
           <div className="overflow-x-auto">
@@ -171,7 +173,7 @@ export default function ResultsPage({
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-3 font-semibold text-gray-700">
-                    {t('results.participants', locale)}
+                    {t('results.participants', currentLocale)}
                   </th>
                   {results.dates.map((date) => (
                     <th key={date.id} className="text-center p-3 font-semibold text-gray-700 min-w-[80px]">

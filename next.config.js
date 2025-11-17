@@ -6,10 +6,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  i18n: {
-    locales: ['mn', 'en'],
-    defaultLocale: 'mn',
-  },
+  // Note: i18n config is for Pages Router only, not compatible with App Router
+  // We handle i18n in middleware.ts instead
 }
 
 module.exports = nextConfig

@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { t, Locale } from '@/lib/i18n/translations'
+import { t } from '@/lib/i18n/translations'
+import { type Locale } from '@/lib/i18n/locale'
 import { generateFingerprint } from '@/lib/utils/fingerprint'
 
 interface Event {
@@ -21,11 +22,12 @@ interface Event {
 export default function EditEventPage({
   params,
 }: {
-  params: { locale: Locale; eventId: string }
+  params: Promise<{ locale: Locale; eventId: string }>
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const locale = params.locale || 'mn'
+  const { locale, eventId } = use(params)
+  const currentLocale = locale || 'mn'
   const editToken = searchParams?.get('token')
 
   const [event, setEvent] = useState<Event | null>(null)
@@ -42,20 +44,20 @@ export default function EditEventPage({
 
   useEffect(() => {
     if (!editToken) {
-      setError(t('errors.notFound', locale))
+      setError(t('errors.notFound', currentLocale))
       setLoading(false)
       return
     }
 
     checkAccessAndLoadEvent()
-  }, [params.eventId, editToken])
+  }, [eventId, editToken])
 
   const checkAccessAndLoadEvent = async () => {
     try {
       const fingerprint = generateFingerprint()
 
       // Verify access
-      const verifyResponse = await fetch(`/api/events/${params.eventId}/verify-access`, {
+      const verifyResponse = await fetch(`/api/events/${eventId}/verify-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ editToken, fingerprint }),
@@ -66,7 +68,7 @@ export default function EditEventPage({
       if (!verifyData.canEdit) {
         setCanEdit(false)
         setAccessChecked(true)
-        setError(t('edit.restrictedDevice', locale))
+        setError(t('edit.restrictedDevice', currentLocale))
         setLoading(false)
         return
       }
@@ -75,7 +77,7 @@ export default function EditEventPage({
       setAccessChecked(true)
 
       // Load event
-      const response = await fetch(`/api/events/${params.eventId}`)
+      const response = await fetch(`/api/events/${eventId}`)
       const data = await response.json()
 
       if (!response.ok) throw new Error(data.error)
@@ -98,7 +100,7 @@ export default function EditEventPage({
     setError('')
 
     try {
-      const response = await fetch(`/api/events/${params.eventId}`, {
+      const response = await fetch(`/api/events/${eventId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +119,7 @@ export default function EditEventPage({
       if (!response.ok) throw new Error(data.error)
 
       // Redirect back to event page
-      router.push(`/${locale}/e/${params.eventId}?edit=${editToken}`)
+      router.push(`/${currentLocale}/e/${eventId}?edit=${editToken}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save changes')
     } finally {
@@ -130,7 +132,7 @@ export default function EditEventPage({
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">{t('common.loading', locale)}</div>
+          <div className="text-gray-600">{t('common.loading', currentLocale)}</div>
         </div>
       </div>
     )
@@ -143,10 +145,10 @@ export default function EditEventPage({
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
             <h2 className="text-xl font-bold text-red-900 mb-2">
-              {t('edit.restrictedDevice', locale)}
+              {t('edit.restrictedDevice', currentLocale)}
             </h2>
             <p className="text-red-700 mb-4">
-              {t('edit.restricted', locale)}
+              {t('edit.restricted', currentLocale)}
             </p>
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
@@ -162,13 +164,13 @@ export default function EditEventPage({
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-            {t('edit.title', locale)}
+            {t('edit.title', currentLocale)}
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
-              label={t('event.form.title', locale)}
-              placeholder={t('event.form.titlePlaceholder', locale)}
+              label={t('event.form.title', currentLocale)}
+              placeholder={t('event.form.titlePlaceholder', currentLocale)}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -176,8 +178,8 @@ export default function EditEventPage({
             />
 
             <Textarea
-              label={t('event.form.description', locale)}
-              placeholder={t('event.form.descriptionPlaceholder', locale)}
+              label={t('event.form.description', currentLocale)}
+              placeholder={t('event.form.descriptionPlaceholder', currentLocale)}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
@@ -185,16 +187,16 @@ export default function EditEventPage({
             />
 
             <Input
-              label={t('event.form.location', locale)}
-              placeholder={t('event.form.locationPlaceholder', locale)}
+              label={t('event.form.location', currentLocale)}
+              placeholder={t('event.form.locationPlaceholder', currentLocale)}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               maxLength={500}
             />
 
             <Input
-              label={t('event.form.ownerName', locale)}
-              placeholder={t('event.form.ownerNamePlaceholder', locale)}
+              label={t('event.form.ownerName', currentLocale)}
+              placeholder={t('event.form.ownerNamePlaceholder', currentLocale)}
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
               maxLength={100}
@@ -210,17 +212,17 @@ export default function EditEventPage({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => router.push(`/${locale}/e/${params.eventId}?edit=${editToken}`)}
+                onClick={() => router.push(`/${currentLocale}/e/${eventId}?edit=${editToken}`)}
                 className="flex-1"
               >
-                {t('event.form.cancel', locale)}
+                {t('event.form.cancel', currentLocale)}
               </Button>
               <Button
                 type="submit"
                 disabled={saving || !title}
                 className="flex-1"
               >
-                {saving ? t('common.loading', locale) : t('edit.save', locale)}
+                {saving ? t('common.loading', currentLocale) : t('edit.save', currentLocale)}
               </Button>
             </div>
           </form>
