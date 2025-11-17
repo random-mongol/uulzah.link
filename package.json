@@ -7,12 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:db": "tsx scripts/test-supabase.ts",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "supabase:link": "supabase link --project-ref poguqhsxcggonechhsnu",
+    "supabase:status": "supabase migration list"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "date-fns": "^3.0.0",
     "date-fns-tz": "^3.0.0",
+    "dotenv": "^17.2.3",
     "next": "15.0.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -28,7 +34,9 @@
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
     "postcss": "^8",
+    "supabase": "^1.200.3",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.6.0"
   }
 }
