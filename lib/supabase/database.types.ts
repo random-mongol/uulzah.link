@@ -14,8 +14,6 @@ export interface Database {
           id: string
           title: string
           description: string | null
-          location: string | null
-          owner_name: string | null
           owner_email: string | null
           edit_token: string
           creator_fingerprint: string | null
@@ -31,11 +29,9 @@ export interface Database {
           response_count: number
         }
         Insert: {
-          id?: string
+          id: string
           title: string
           description?: string | null
-          location?: string | null
-          owner_name?: string | null
           owner_email?: string | null
           edit_token: string
           creator_fingerprint?: string | null
@@ -54,8 +50,6 @@ export interface Database {
           id?: string
           title?: string
           description?: string | null
-          location?: string | null
-          owner_name?: string | null
           owner_email?: string | null
           edit_token?: string
           creator_fingerprint?: string | null

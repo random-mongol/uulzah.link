@@ -58,6 +58,10 @@ export const translations = {
     'common.back': 'Буцах',
     'common.loading': 'Ачааллаж байна...',
     'common.error': 'Алдаа гарлаа',
+    'common.optional': '(сонголттой)',
+    'common.required': '(заавал)',
+    'common.clickToSelect': 'Сонгох',
+    'common.allDay': 'Бүтэн өдөр',
 
     // Errors
     'errors.notFound': 'Үйл явдал олдсонгүй',
@@ -130,6 +134,10 @@ export const translations = {
     'common.back': 'Back',
     'common.loading': 'Loading...',
     'common.error': 'Error',
+    'common.optional': '(optional)',
+    'common.required': '(required)',
+    'common.clickToSelect': 'Click to select',
+    'common.allDay': 'All day',
 
     // Errors
     'errors.notFound': 'Event not found',

@@ -4,14 +4,15 @@ import { cn } from '@/lib/utils/cn'
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
+  helperText?: string
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, required, ...props }, ref) => {
+  ({ className, label, error, helperText, required, ...props }, ref) => {
     return (
-      <div className="w-full">
+      <div className="w-full space-y-2">
         {label && (
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          <label className="block text-sm font-semibold text-gray-700">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -20,15 +21,27 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-3 text-base border-2 rounded-lg transition-all duration-200',
-            'focus:outline-none focus:border-primary focus:ring-3 focus:ring-primary-light',
-            'placeholder:text-gray-400',
-            error ? 'border-red-500' : 'border-gray-300',
+            'focus:outline-none focus:ring-2',
+            'placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50',
+            error
+              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+              : 'border-gray-300 focus:border-primary focus:ring-primary/20',
             className
           )}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-describedby={error ? `${props.id}-error` : helperText ? `${props.id}-description` : undefined}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
+          <p id={`${props.id}-error`} className="text-sm text-red-600 flex items-center gap-1">
+            <span>⚠️</span>
+            {error}
+          </p>
+        )}
+        {helperText && !error && (
+          <p id={`${props.id}-description`} className="text-sm text-gray-500">
+            {helperText}
+          </p>
         )}
       </div>
     )

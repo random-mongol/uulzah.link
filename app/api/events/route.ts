@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
 import { generateSecureToken } from '@/lib/utils/crypto'
+import { generateShortId } from '@/lib/utils/id'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, location, ownerName, dates, fingerprint } = body
+    const { title, description, dates, fingerprint } = body
 
     // Validation
     if (!title || title.length < 3 || title.length > 255) {
@@ -22,17 +23,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate edit token
+    // Generate short ID and edit token
+    const eventId = generateShortId()
     const editToken = generateSecureToken()
 
     // Create event
     const { data: event, error: eventError } = await supabase
       .from('events')
       .insert({
+        id: eventId,
         title,
         description: description || null,
-        location: location || null,
-        owner_name: ownerName || null,
         edit_token: editToken,
         creator_fingerprint: fingerprint || null,
         timezone: 'Asia/Ulaanbaatar',

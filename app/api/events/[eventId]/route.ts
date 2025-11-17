@@ -47,8 +47,6 @@ export async function GET(
       id: event.id,
       title: event.title,
       description: event.description,
-      location: event.location,
-      owner_name: event.owner_name,
       timezone: event.timezone,
       dates: dates || [],
     })
@@ -70,7 +68,7 @@ export async function PATCH(
     const eventId = params.eventId
     const editToken = request.headers.get('x-edit-token')
     const body = await request.json()
-    const { title, description, location, owner_name } = body
+    const { title, description } = body
 
     // Validation
     if (!editToken) {
@@ -109,8 +107,6 @@ export async function PATCH(
       .update({
         title,
         description: description || null,
-        location: location || null,
-        owner_name: owner_name || null,
       })
       .eq('id', eventId)
       .select()

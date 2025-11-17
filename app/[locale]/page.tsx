@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/Button'
 import { t } from '@/lib/i18n/translations'
-import { getLocalePath, type Locale } from '@/lib/i18n/locale'
+import { type Locale } from '@/lib/i18n/locale'
 
 export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params
@@ -22,7 +22,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
             {t('home.hero.subtitle', currentLocale)}
           </p>
 
-          <Link href={getLocalePath('/create', currentLocale)}>
+          <Link href="/create">
             <Button size="lg" className="w-full sm:w-auto px-12">
               {t('home.hero.cta', currentLocale)}
             </Button>

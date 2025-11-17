@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { GridCell } from '@/components/ui/GridCell'
+import { Spinner } from '@/components/ui/Spinner'
+import { ToastContainer } from '@/components/ui/Toast'
+import { useToast } from '@/lib/hooks/useToast'
 import { t } from '@/lib/i18n/translations'
 import { getLocalePath, type Locale } from '@/lib/i18n/locale'
 import { generateFingerprint } from '@/lib/utils/fingerprint'
@@ -18,16 +21,35 @@ type CellStatus = '' | 'yes' | 'maybe'
 interface EventDate {
   id: number
   start_datetime: string
+  end_datetime: string | null
   is_all_day: boolean
+  yes_count?: number
+  maybe_count?: number
+  no_count?: number
+}
+
+interface Participant {
+  id: number
+  name: string
+  responses: Record<number, 'yes' | 'no' | 'maybe'>
 }
 
 interface Event {
   id: string
   title: string
   description: string | null
-  location: string | null
-  owner_name: string | null
   dates: EventDate[]
+}
+
+interface Results {
+  event: {
+    id: string
+    title: string
+    description: string | null
+  }
+  dates: EventDate[]
+  participants: Participant[]
+  totalParticipants: number
 }
 
 export default function EventPage({
@@ -40,8 +62,10 @@ export default function EventPage({
   const { locale, eventId } = use(params)
   const currentLocale = locale || 'mn'
   const editToken = searchParams?.get('edit')
+  const { toasts, showToast, removeToast } = useToast()
 
   const [event, setEvent] = useState<Event | null>(null)
+  const [results, setResults] = useState<Results | null>(null)
   const [name, setName] = useState('')
   const [comment, setComment] = useState('')
   const [availability, setAvailability] = useState<Record<number, CellStatus>>({})
@@ -53,6 +77,7 @@ export default function EventPage({
 
   useEffect(() => {
     loadEvent()
+    loadResults()
     if (editToken) {
       verifyEditAccess()
     }
@@ -70,6 +95,20 @@ export default function EventPage({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load event')
       setLoading(false)
+    }
+  }
+
+  const loadResults = async () => {
+    try {
+      const response = await fetch(`/api/events/${eventId}/results`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setResults(data)
+      }
+    } catch (err) {
+      console.error('Failed to load results:', err)
+      // Don't set error, results are optional
     }
   }
 
@@ -125,8 +164,16 @@ export default function EventPage({
 
       if (!response.ok) throw new Error(data.error)
 
-      // Redirect to results page
-      router.push(`/${currentLocale}/e/${eventId}/results`)
+      // Reload results to show updated data
+      await loadResults()
+
+      // Clear form
+      setName('')
+      setComment('')
+      setAvailability({})
+
+      // Show success message
+      showToast(currentLocale === 'mn' ? 'Хариулт амжилттай илгээгдлээ!' : 'Response submitted successfully!')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit response')
     } finally {
@@ -136,7 +183,7 @@ export default function EventPage({
 
   const copyLink = (link: string) => {
     navigator.clipboard.writeText(link)
-    alert(t('event.share.copied', currentLocale))
+    showToast(t('event.share.copied', currentLocale))
   }
 
   if (loading) {
@@ -144,7 +191,7 @@ export default function EventPage({
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">{t('common.loading', currentLocale)}</div>
+          <Spinner size="lg" text={t('common.loading', currentLocale)} />
         </div>
       </div>
     )
@@ -155,8 +202,12 @@ export default function EventPage({
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 text-red-700 flex items-start gap-3 shadow-sm animate-slide-up">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <h3 className="font-semibold text-lg mb-1">{t('common.error', currentLocale)}</h3>
+              <p>{error}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -165,12 +216,13 @@ export default function EventPage({
 
   if (!event) return null
 
-  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${currentLocale}/e/${event.id}`
+  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/e/${event.id}`
   const editUrl = editToken ? `${shareUrl}?edit=${editToken}` : ''
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Share Dialog */}
@@ -244,15 +296,6 @@ export default function EventPage({
           {event.description && (
             <p className="text-gray-600 mb-2">{event.description}</p>
           )}
-          {event.location && (
-            <p className="text-gray-500 text-sm">📍 {event.location}</p>
-          )}
-          {event.owner_name && (
-            <p className="text-gray-500 text-sm mt-1">
-              {currentLocale === 'mn' ? 'Зохион байгуулагч:' : 'Organizer:'}{' '}
-              {event.owner_name}
-            </p>
-          )}
           {editToken && !canEdit && (
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
@@ -262,10 +305,122 @@ export default function EventPage({
           )}
         </div>
 
+        {/* Results Section - Show if there are participants */}
+        {results && results.totalParticipants > 0 && (
+          <>
+            {/* Best Option Card */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                {t('results.bestOptions', currentLocale)}
+              </h2>
+              {(() => {
+                const sortedDates = [...results.dates].sort((a, b) => (b.yes_count || 0) - (a.yes_count || 0))
+                const bestDate = sortedDates[0]
+                return (
+                  <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-primary rounded-xl p-6">
+                    <div className="flex items-start gap-4">
+                      <span className="text-4xl">🏆</span>
+                      <div className="flex-1">
+                        <div className="text-lg font-bold text-gray-900">
+                          {format(new Date(bestDate.start_datetime), 'MMMM dd, yyyy (EEEE)')}
+                          {!bestDate.is_all_day && (
+                            <>
+                              {' at '}
+                              {format(new Date(bestDate.start_datetime), 'HH:mm')}
+                              {bestDate.end_datetime && ` - ${format(new Date(bestDate.end_datetime), 'HH:mm')}`}
+                            </>
+                          )}
+                        </div>
+                        <div className="mt-2 flex gap-4 text-sm">
+                          <span className="text-green-600 font-semibold">
+                            ✓ {bestDate.yes_count} {currentLocale === 'mn' ? 'чөлөөтэй' : 'available'}
+                          </span>
+                          {(bestDate.maybe_count || 0) > 0 && (
+                            <span className="text-yellow-600">
+                              ? {bestDate.maybe_count} {currentLocale === 'mn' ? 'магадгүй' : 'maybe'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Detailed Results Table */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                {currentLocale === 'mn' ? 'Дэлгэрэнгүй мэдээлэл' : 'Current Responses'}
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-3 font-semibold text-gray-700">
+                        {t('results.participants', currentLocale)}
+                      </th>
+                      {results.dates.map((date) => (
+                        <th key={date.id} className="text-center p-3 font-semibold text-gray-700 min-w-[80px]">
+                          <div>{format(new Date(date.start_datetime), 'MM/dd')}</div>
+                          <div className="text-xs font-normal text-gray-500">
+                            {format(new Date(date.start_datetime), 'EEE')}
+                          </div>
+                          {!date.is_all_day && (
+                            <div className="text-xs font-normal text-gray-500">
+                              {format(new Date(date.start_datetime), 'HH:mm')}
+                              {date.end_datetime && `-${format(new Date(date.end_datetime), 'HH:mm')}`}
+                            </div>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.participants.map((participant) => (
+                      <tr key={participant.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3 font-medium text-gray-900">{participant.name}</td>
+                        {results.dates.map((date) => {
+                          const response = participant.responses[date.id]
+                          return (
+                            <td key={date.id} className="text-center p-3">
+                              {response === 'yes' && <span className="text-green-600 text-lg">✓</span>}
+                              {response === 'maybe' && <span className="text-yellow-600 text-lg">?</span>}
+                              {response === 'no' && <span className="text-gray-300 text-lg">-</span>}
+                              {!response && <span className="text-gray-200">-</span>}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+
+                    {/* Summary Row */}
+                    <tr className="bg-gray-50 font-semibold">
+                      <td className="p-3 text-gray-700">
+                        {currentLocale === 'mn' ? 'Нийт' : 'Total'}
+                      </td>
+                      {results.dates.map((date) => (
+                        <td key={date.id} className="text-center p-3">
+                          <div className="text-green-600">{date.yes_count || 0}</div>
+                          {(date.maybe_count || 0) > 0 && (
+                            <div className="text-xs text-yellow-600">+{date.maybe_count}</div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Response Form */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {t('response.form.title', currentLocale)}
+            {results && results.totalParticipants > 0
+              ? (currentLocale === 'mn' ? 'Таны боломж нэмэх' : 'Add Your Availability')
+              : t('response.form.title', currentLocale)}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -285,21 +440,29 @@ export default function EventPage({
               </label>
 
               <div className="overflow-x-auto">
-                <div className="inline-grid gap-2" style={{ gridTemplateColumns: `repeat(${event.dates.length}, 1fr)`, minWidth: '100%' }}>
-                  {event.dates.map((date) => (
-                    <div key={date.id} className="text-center">
-                      <div className="text-xs font-medium text-gray-600 mb-2">
-                        {format(new Date(date.start_datetime), 'MM/dd')}
-                        <br />
-                        {format(new Date(date.start_datetime), 'EEE')}
-                      </div>
+                <div className="flex gap-2 flex-wrap">
+                  {event.dates.map((date) => {
+                    const dateLabel = format(new Date(date.start_datetime), 'MM/dd')
+                    const dayLabel = format(new Date(date.start_datetime), 'EEE')
+                    const startTime = format(new Date(date.start_datetime), 'HH:mm')
+                    const endTime = date.end_datetime ? format(new Date(date.end_datetime), 'HH:mm') : ''
+                    const timeLabel = date.is_all_day
+                      ? t('common.allDay', currentLocale)
+                      : endTime ? `${startTime} - ${endTime}` : startTime
+
+                    return (
                       <GridCell
+                        key={date.id}
                         status={availability[date.id] || ''}
                         onClick={() => cycleStatus(date.id)}
-                        label={`${format(new Date(date.start_datetime), 'MM/dd')}`}
+                        label={`${dateLabel} ${dayLabel} ${timeLabel}`}
+                        dateLabel={dateLabel}
+                        dayLabel={dayLabel}
+                        timeLabel={timeLabel}
+                        locale={currentLocale}
                       />
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -330,14 +493,16 @@ export default function EventPage({
             />
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
+              <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 text-sm flex items-start gap-3 animate-slide-up">
+                <span className="text-lg">⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
             {/* Submit */}
             <Button
               type="submit"
+              loading={submitting}
               disabled={submitting || !name}
               className="w-full"
               size="lg"
@@ -345,16 +510,6 @@ export default function EventPage({
               {submitting ? t('common.loading', currentLocale) : t('response.form.submit', currentLocale)}
             </Button>
           </form>
-
-          {/* View Results Link */}
-          <div className="mt-6 text-center">
-            <a
-              href={getLocalePath(`/e/${event.id}/results`, currentLocale)}
-              className="text-primary hover:underline text-sm"
-            >
-              {t('results.title', currentLocale)} →
-            </a>
-          </div>
         </div>
       </main>
     </div>
