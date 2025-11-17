@@ -55,7 +55,6 @@
   - Zustand `4.x` (client-side state when needed)
 - **HTTP Client**:
   - Native fetch API
-  - SWR `2.x` (data fetching and caching)
 
 ### Backend
 - **Runtime**: Node.js `20.x`
@@ -65,12 +64,11 @@
   - Drizzle ORM `0.33.x` (lightweight, type-safe)
   - Alternative: Prisma `5.x` (more features, larger bundle)
 - **Validation**: Zod `3.x`
-- **Rate Limiting**: @upstash/ratelimit `2.x` with Vercel KV
+- **Rate Limiting**: Simple in-memory or database-based rate limiting
 
 ### Infrastructure
 - **Hosting**: Vercel
 - **Database**: Vercel Postgres
-- **Caching**: Vercel KV (Redis)
 - **Analytics**: Vercel Analytics
 - **Monitoring**: Vercel Logs + Sentry (optional)
 
@@ -106,17 +104,15 @@
 │  └──────────────────────────────────────────────────────┘  │
 └────────────────────────────┬────────────────────────────────┘
                              │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-        ▼                    ▼                    ▼
-┌───────────────┐   ┌──────────────┐    ┌─────────────┐
-│ Vercel        │   │  Vercel KV   │    │  Vercel     │
-│ Postgres      │   │  (Redis)     │    │  Blob       │
-│               │   │              │    │  (optional) │
-│ - Events      │   │ - Caching    │    │ - Assets    │
-│ - Responses   │   │ - Rate Limit │    │             │
-│ - Analytics   │   │ - Sessions   │    │             │
-└───────────────┘   └──────────────┘    └─────────────┘
+                             ▼
+                    ┌───────────────┐
+                    │ Vercel        │
+                    │ Postgres      │
+                    │               │
+                    │ - Events      │
+                    │ - Responses   │
+                    │ - Analytics   │
+                    └───────────────┘
 ```
 
 ### Component Architecture
@@ -170,7 +166,7 @@ app/
 
 4. **View Results**:
    ```
-   User → GET /e/[id]/results → Cached (5min) → Aggregate Data → Render
+   User → GET /e/[id]/results → Server Component → Postgres → Aggregate Data → Render
    ```
 
 ---
@@ -356,40 +352,6 @@ CREATE TABLE event_analytics (
 CREATE INDEX idx_analytics_event_id ON event_analytics(event_id, created_at DESC);
 CREATE INDEX idx_analytics_event_type ON event_analytics(event_type, created_at DESC);
 CREATE INDEX idx_analytics_created_at ON event_analytics(created_at DESC);
-```
-
-### Materialized Views
-
-#### Aggregated Response Counts
-For faster results page loading.
-
-```sql
-CREATE MATERIALIZED VIEW event_date_response_counts AS
-SELECT
-  ed.event_id,
-  ed.id as event_date_id,
-  ed.start_datetime,
-  ed.display_order,
-  COUNT(CASE WHEN r.status = 'yes' THEN 1 END) as yes_count,
-  COUNT(CASE WHEN r.status = 'no' THEN 1 END) as no_count,
-  COUNT(CASE WHEN r.status = 'maybe' THEN 1 END) as maybe_count,
-  COUNT(r.id) as total_responses
-FROM event_dates ed
-LEFT JOIN responses r ON ed.id = r.event_date_id
-LEFT JOIN participants p ON r.participant_id = p.id
-GROUP BY ed.event_id, ed.id, ed.start_datetime, ed.display_order;
-
-CREATE UNIQUE INDEX idx_mv_event_date_counts ON event_date_response_counts(event_date_id);
-CREATE INDEX idx_mv_event_counts ON event_date_response_counts(event_id);
-
--- Refresh strategy: trigger-based or periodic (every 5 minutes)
-CREATE OR REPLACE FUNCTION refresh_event_date_counts()
-RETURNS TRIGGER AS $$
-BEGIN
-  REFRESH MATERIALIZED VIEW CONCURRENTLY event_date_response_counts;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
 ```
 
 ### Database Migrations
@@ -666,32 +628,50 @@ Errors:
 
 ### Rate Limiting
 
-Using Vercel KV (Redis) with @upstash/ratelimit:
+Simple database-based rate limiting:
 
 ```typescript
 // lib/rate-limit.ts
-import { Ratelimit } from '@upstash/ratelimit';
-import { kv } from '@vercel/kv';
+import { db } from './db';
 
-export const rateLimiters = {
-  createEvent: new Ratelimit({
-    redis: kv,
-    limiter: Ratelimit.slidingWindow(10, '1 h'),  // 10 events per hour
-    analytics: true,
-  }),
+export async function checkRateLimit(
+  identifier: string,
+  action: string,
+  limit: number,
+  windowMs: number
+): Promise<boolean> {
+  const windowStart = new Date(Date.now() - windowMs);
 
-  submitResponse: new Ratelimit({
-    redis: kv,
-    limiter: Ratelimit.slidingWindow(20, '15 m'),  // 20 responses per 15 min
-    analytics: true,
-  }),
+  // Count recent actions
+  const count = await db
+    .select({ count: sql`count(*)` })
+    .from(rateLimits)
+    .where(
+      and(
+        eq(rateLimits.identifier, identifier),
+        eq(rateLimits.action, action),
+        gte(rateLimits.timestamp, windowStart)
+      )
+    );
 
-  viewEvent: new Ratelimit({
-    redis: kv,
-    limiter: Ratelimit.slidingWindow(100, '1 m'),  // 100 views per minute
-    analytics: true,
-  }),
-};
+  if (count[0].count >= limit) {
+    return false;
+  }
+
+  // Record this action
+  await db.insert(rateLimits).values({
+    identifier,
+    action,
+    timestamp: new Date(),
+  });
+
+  return true;
+}
+
+// Usage:
+// - Create event: 10 per hour per IP
+// - Submit response: 20 per 15 min per IP
+// - View event: Basic throttling only for abuse prevention
 ```
 
 ### Error Response Format
@@ -872,9 +852,6 @@ vercel env add POSTGRES_URL
 vercel env add POSTGRES_PRISMA_URL
 vercel env add POSTGRES_URL_NO_SSL
 vercel env add POSTGRES_URL_NON_POOLING
-vercel env add KV_URL
-vercel env add KV_REST_API_URL
-vercel env add KV_REST_API_TOKEN
 ```
 
 #### 2. vercel.json
@@ -895,17 +872,7 @@ vercel env add KV_REST_API_TOKEN
       "schedule": "*/5 * * * *"
     }
   ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    }
-  ]
+  "headers": []
 }
 ```
 
@@ -931,11 +898,6 @@ POSTGRES_PRISMA_URL=
 POSTGRES_URL_NO_SSL=
 POSTGRES_URL_NON_POOLING=
 
-# Redis/KV (auto-configured by Vercel)
-KV_URL=
-KV_REST_API_URL=
-KV_REST_API_TOKEN=
-
 # Application
 NEXT_PUBLIC_APP_URL=https://uulzah.link
 NEXT_PUBLIC_DEFAULT_LOCALE=mn
@@ -949,9 +911,6 @@ VERCEL_ANALYTICS_ID=
 ```env
 # Local database
 POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/uulzah_dev
-
-# Local Redis (optional)
-KV_URL=redis://localhost:6379
 
 # Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -1058,58 +1017,7 @@ vercel alias set [deployment-url] uulzah.link
 
 ## Performance Considerations
 
-### 1. Caching Strategy
-
-#### ISR (Incremental Static Regeneration)
-```typescript
-// app/e/[eventId]/page.tsx
-export const revalidate = 300; // 5 minutes
-
-export async function generateStaticParams() {
-  // Pre-generate top 100 most viewed events
-  const events = await getPopularEvents(100);
-  return events.map(event => ({ eventId: event.id }));
-}
-```
-
-#### Redis Caching
-```typescript
-// Cached query pattern
-async function getEventWithCache(eventId: string) {
-  const cacheKey = `event:${eventId}`;
-
-  // Try cache first
-  const cached = await kv.get(cacheKey);
-  if (cached) return cached;
-
-  // Query database
-  const event = await db.query.events.findFirst({
-    where: eq(events.id, eventId),
-    with: { dates: true, participants: true },
-  });
-
-  // Cache for 5 minutes
-  await kv.setex(cacheKey, 300, event);
-
-  return event;
-}
-```
-
-#### HTTP Caching Headers
-```typescript
-// API route example
-export async function GET(request: Request) {
-  const data = await fetchData();
-
-  return Response.json(data, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-    },
-  });
-}
-```
-
-### 2. Database Optimization
+### 1. Database Optimization
 
 #### Connection Pooling
 ```typescript
@@ -1179,7 +1087,7 @@ async function getEventWithResponses(eventId: string) {
 }
 ```
 
-### 3. Frontend Optimization
+### 2. Frontend Optimization
 
 #### Code Splitting
 ```typescript
@@ -1223,7 +1131,7 @@ module.exports = withBundleAnalyzer({
 });
 ```
 
-### 4. Performance Metrics
+### 3. Performance Metrics
 
 **Target Metrics**:
 - **Time to First Byte (TTFB)**: < 200ms
@@ -1252,7 +1160,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 5. Asset Optimization
+### 4. Asset Optimization
 
 - **Images**: WebP/AVIF format, responsive sizes
 - **Fonts**: Variable fonts, preload, font-display: swap
@@ -1283,10 +1191,6 @@ export default function RootLayout({ children }) {
 const dbUrl = process.env.POSTGRES_PRISMA_URL; // Uses pgbouncer
 ```
 
-#### Redis/KV Scaling
-- **Vercel KV**: Managed, auto-scaling Redis
-- **No Connection Limits**: REST API instead of direct Redis
-- **Global Replication**: Low-latency worldwide
 
 ### Vertical Scaling Limits
 
@@ -1749,7 +1653,6 @@ export const config = {
 **Monthly costs (assuming 10k active events, 100k views)**:
 - Vercel Pro: $20/month
 - Vercel Postgres: $10/month (256MB)
-- Vercel KV: Included in Pro
 - Domain: $12/year
 - **Total: ~$30/month**
 
