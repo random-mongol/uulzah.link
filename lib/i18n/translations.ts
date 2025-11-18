@@ -23,6 +23,14 @@ export const translations = {
     'event.form.addDate': 'Огноо нэмэх',
     'event.form.submit': 'Үйл явдал үүсгэх',
     'event.form.cancel': 'Болих',
+    'event.form.voiceInput': 'Дуугаар оруулах',
+    'event.form.voiceRecording': 'Дуу бичиж байна...',
+    'event.form.voiceProcessing': 'Боловсруулж байна...',
+    'event.form.voiceError': 'Дуу бичих алдаатай. Дахин оролдоно уу',
+    'event.form.voiceSuccess': 'Маягт автоматаар бөглөгдлөө!',
+    'event.form.voiceMaxDuration': 'Дээд хугацаа: 30 секунд',
+    'event.form.voicePermissionDenied': 'Микрофон ашиглах зөвшөөрөл шаардлагатай',
+    'event.form.voiceNotSupported': 'Таны хөтөч дуу бичих боломжгүй байна',
 
     // Event Share
     'event.share.title': 'Үйл явдал үүсгэгдлээ!',
@@ -99,6 +107,14 @@ export const translations = {
     'event.form.addDate': 'Add date',
     'event.form.submit': 'Create Event',
     'event.form.cancel': 'Cancel',
+    'event.form.voiceInput': 'Voice Input',
+    'event.form.voiceRecording': 'Recording...',
+    'event.form.voiceProcessing': 'Processing...',
+    'event.form.voiceError': 'Voice recording failed. Please try again',
+    'event.form.voiceSuccess': 'Form auto-filled successfully!',
+    'event.form.voiceMaxDuration': 'Max duration: 30 seconds',
+    'event.form.voicePermissionDenied': 'Microphone permission required',
+    'event.form.voiceNotSupported': 'Your browser does not support voice recording',
 
     // Event Share
     'event.share.title': 'Event Created!',

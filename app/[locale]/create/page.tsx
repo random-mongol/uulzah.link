@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, addDays, nextFriday, nextSaturday } from 'date-fns'
+import { format, addDays, nextFriday, nextSaturday, parse } from 'date-fns'
 import { Plus } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/Button'
@@ -10,8 +10,10 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { DateTimeInput } from '@/components/ui/DateTimeInput'
 import { Label } from '@/components/ui/Label'
+import { VoiceRecorder } from '@/components/VoiceRecorder'
 import { t, Locale } from '@/lib/i18n/translations'
 import { generateFingerprint } from '@/lib/utils/fingerprint'
+import type { VoiceMeetingData } from '@/lib/types/voice'
 
 interface DateTimeOption {
   date: string // yyyy-MM-dd
@@ -49,6 +51,7 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
   const [dateOptions, setDateOptions] = useState<DateTimeOption[]>(getDefaultDates())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [voiceSuccess, setVoiceSuccess] = useState(false)
 
   const addDate = () => {
     // Add next day with the same time as the last option
@@ -115,6 +118,68 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
       seen.add(key)
     }
     return true
+  }
+
+  // Handle voice recording result
+  const handleVoiceResult = (data: VoiceMeetingData) => {
+    // Clear any previous errors
+    setError('')
+
+    // Fill in title
+    if (data.title) {
+      setTitle(data.title)
+    }
+
+    // Fill in description
+    if (data.description) {
+      setDescription(data.description)
+    }
+
+    // Fill in dates
+    if (data.possibleDates && data.possibleDates.length > 0) {
+      const newDateOptions: DateTimeOption[] = []
+
+      for (const voiceDate of data.possibleDates) {
+        if (voiceDate.isoDate) {
+          // Parse time range
+          let startTime = '19:00' // default
+          let endTime = ''
+
+          if (voiceDate.timeRange) {
+            const timeRangeMatch = voiceDate.timeRange.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/)
+            if (timeRangeMatch) {
+              startTime = timeRangeMatch[1]
+              endTime = timeRangeMatch[2]
+            } else {
+              // Single time
+              const singleTimeMatch = voiceDate.timeRange.match(/(\d{1,2}:\d{2})/)
+              if (singleTimeMatch) {
+                startTime = singleTimeMatch[1]
+              }
+            }
+          }
+
+          newDateOptions.push({
+            date: voiceDate.isoDate,
+            startTime,
+            endTime,
+          })
+        }
+      }
+
+      if (newDateOptions.length > 0) {
+        setDateOptions(newDateOptions)
+      }
+    }
+
+    // Show success message
+    setVoiceSuccess(true)
+    setTimeout(() => setVoiceSuccess(false), 5000) // Hide after 5 seconds
+  }
+
+  // Handle voice recording error
+  const handleVoiceError = (errorMessage: string) => {
+    setError(errorMessage)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -199,6 +264,35 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Voice Input */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-primary-light to-blue-50 rounded-lg border-2 border-primary-light">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="text-2xl">🎤</div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {currentLocale === 'mn' ? 'Дуугаар оруулах' : 'Voice Input'}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {currentLocale === 'mn'
+                      ? 'Уулзалтын гарчиг, тайлбар болон боломжит огноонуудыг дуугаар оруулна уу'
+                      : 'Speak to fill in the meeting title, description, and possible dates'}
+                  </p>
+                </div>
+              </div>
+              <VoiceRecorder
+                locale={currentLocale}
+                onResult={handleVoiceResult}
+                onError={handleVoiceError}
+              />
+            </div>
+
+            {voiceSuccess && (
+              <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-700 text-sm flex items-start gap-3 animate-slide-up">
+                <span className="text-lg">✅</span>
+                <span>{t('event.form.voiceSuccess', currentLocale)}</span>
+              </div>
+            )}
+
             {/* Title */}
             <Input
               label={t('event.form.title', currentLocale)}
