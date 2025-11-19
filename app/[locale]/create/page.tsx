@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { format, addDays, nextFriday, nextSaturday, parse } from 'date-fns'
 import { Plus } from 'lucide-react'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -254,10 +255,10 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-8 w-full">
         <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
             {t('home.hero.cta', currentLocale)}
@@ -377,6 +378,8 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
           </form>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
 }

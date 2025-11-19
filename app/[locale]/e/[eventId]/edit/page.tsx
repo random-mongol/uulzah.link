@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -129,20 +130,21 @@ export default function EditEventPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex items-center justify-center h-64">
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-600">{t('common.loading', currentLocale)}</div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   if (!canEdit || !accessChecked) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex-1 max-w-2xl mx-auto px-4 py-8 w-full">
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
             <h2 className="text-xl font-bold text-red-900 mb-2">
               {t('edit.restrictedDevice', currentLocale)}
@@ -153,15 +155,16 @@ export default function EditEventPage({
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-8 w-full">
         <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
             {t('edit.title', currentLocale)}
@@ -228,6 +231,8 @@ export default function EditEventPage({
           </form>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
 }

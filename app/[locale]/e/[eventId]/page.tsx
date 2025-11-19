@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -199,9 +200,9 @@ export default function EventPage({
 
   if (error && !event) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex-1 max-w-2xl mx-auto px-4 py-8 w-full">
           <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6 text-red-700 flex items-start gap-3 shadow-sm animate-slide-up">
             <span className="text-2xl">⚠️</span>
             <div>
@@ -210,6 +211,7 @@ export default function EventPage({
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -220,11 +222,11 @@ export default function EventPage({
   const editUrl = editToken ? `${shareUrl}?edit=${editToken}` : ''
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
         {/* Share Dialog */}
         {showShareDialog && editToken && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
@@ -512,6 +514,8 @@ export default function EventPage({
           </form>
         </div>
       </main>
+
+      <Footer />
     </div>
   )
 }

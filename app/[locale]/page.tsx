@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { t } from '@/lib/i18n/translations'
 import { type Locale } from '@/lib/i18n/locale'
@@ -83,12 +84,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-100 py-8 px-4 mt-auto">
-        <div className="max-w-7xl mx-auto text-center text-sm text-gray-600">
-          <p>&copy; 2025 uulzah.link</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
