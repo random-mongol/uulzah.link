@@ -12,6 +12,7 @@ interface DateTimeInputProps {
   onRemove?: () => void
   canRemove?: boolean
   locale: Locale
+  index?: number
 }
 
 export function DateTimeInput({
@@ -24,9 +25,13 @@ export function DateTimeInput({
   onRemove,
   canRemove,
   locale,
+  index,
 }: DateTimeInputProps) {
   return (
-    <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 transition-all duration-200 hover:shadow-md">
+    <div
+      className="group relative bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 transition-all duration-200 hover:shadow-md"
+      data-testid={index !== undefined ? `date-time-input-${index}` : undefined}
+    >
       {/* Remove button - only show on hover if removable */}
       {canRemove && onRemove && (
         <button

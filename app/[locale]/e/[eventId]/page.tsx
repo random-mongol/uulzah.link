@@ -428,6 +428,7 @@ export default function EventPage({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <Input
+              name="name"
               label={t('response.form.name', currentLocale)}
               placeholder={t('response.form.namePlaceholder', currentLocale)}
               value={name}
@@ -455,6 +456,7 @@ export default function EventPage({
                     return (
                       <GridCell
                         key={date.id}
+                        dateId={date.id}
                         status={availability[date.id] || ''}
                         onClick={() => cycleStatus(date.id)}
                         label={`${dateLabel} ${dayLabel} ${timeLabel}`}
@@ -487,6 +489,7 @@ export default function EventPage({
 
             {/* Comment */}
             <Textarea
+              name="comment"
               label={t('response.form.comment', currentLocale)}
               placeholder={t('response.form.commentPlaceholder', currentLocale)}
               value={comment}

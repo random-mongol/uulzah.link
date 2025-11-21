@@ -296,6 +296,7 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
 
             {/* Title */}
             <Input
+              name="title"
               label={t('event.form.title', currentLocale)}
               placeholder={t('event.form.titlePlaceholder', currentLocale)}
               value={title}
@@ -306,6 +307,7 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
 
             {/* Description */}
             <Textarea
+              name="description"
               label={t('event.form.description', currentLocale)}
               placeholder={t('event.form.descriptionPlaceholder', currentLocale)}
               value={description}
@@ -324,6 +326,7 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
                 {dateOptions.map((option, index) => (
                   <DateTimeInput
                     key={index}
+                    index={index}
                     date={option.date}
                     startTime={option.startTime}
                     endTime={option.endTime}

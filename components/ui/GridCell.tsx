@@ -13,9 +13,10 @@ interface GridCellProps {
   dayLabel: string // e.g., "Fri"
   timeLabel: string // e.g., "19:00 - 21:00" or "19:00"
   locale?: Locale
+  dateId?: number
 }
 
-export function GridCell({ status, onClick, label, dateLabel, dayLabel, timeLabel, locale = 'mn' }: GridCellProps) {
+export function GridCell({ status, onClick, label, dateLabel, dayLabel, timeLabel, locale = 'mn', dateId }: GridCellProps) {
   const statusStyles = {
     '': 'bg-white border-gray-300 hover:border-gray-400',
     yes: 'bg-green-50 border-green-500',
@@ -34,6 +35,7 @@ export function GridCell({ status, onClick, label, dateLabel, dayLabel, timeLabe
       onClick={onClick}
       aria-label={label}
       aria-pressed={status !== ''}
+      data-testid={dateId !== undefined ? `grid-cell-${dateId}` : undefined}
       className={cn(
         'w-full min-w-[100px] border-2 rounded-lg p-3',
         'flex flex-col items-center justify-between gap-2',
