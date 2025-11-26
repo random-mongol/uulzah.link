@@ -220,6 +220,7 @@ export default function EventPage({
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/e/${event.id}`
   const editUrl = editToken ? `${shareUrl}?edit=${editToken}` : ''
+  const createUrl = getLocalePath('/create', currentLocale)
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -514,6 +515,14 @@ export default function EventPage({
             >
               {submitting ? t('common.loading', currentLocale) : t('response.form.submit', currentLocale)}
             </Button>
+
+            <div className="flex justify-center">
+              <Link href={createUrl} className="w-full sm:w-auto">
+                <Button variant="secondary" size="md" className="w-full sm:w-auto">
+                  {t('home.hero.cta', currentLocale)}
+                </Button>
+              </Link>
+            </div>
           </form>
         </div>
       </main>

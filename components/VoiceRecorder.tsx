@@ -28,6 +28,7 @@ export function VoiceRecorder({
   const [transcription, setTranscription] = useState('')
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const shouldProcessRef = useRef(true)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -55,6 +56,7 @@ export function VoiceRecorder({
 
   const startRecording = async () => {
     try {
+      shouldProcessRef.current = true
       // Request microphone permission
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
@@ -103,6 +105,14 @@ export function VoiceRecorder({
         if (audioContextRef.current) {
           audioContextRef.current.close()
           audioContextRef.current = null
+        }
+
+        // If user cancelled, skip processing
+        if (!shouldProcessRef.current) {
+          chunksRef.current = []
+          setState('idle')
+          setTranscription('')
+          return
         }
 
         // Process the recorded audio
@@ -211,6 +221,7 @@ export function VoiceRecorder({
   }
 
   const handleCancel = () => {
+    shouldProcessRef.current = false
     stopRecording()
     setState('idle')
     chunksRef.current = []

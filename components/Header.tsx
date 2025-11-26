@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { getLocalePath, getLocaleFromPath, type Locale } from '@/lib/i18n/locale'
+import { getLocalePath, getLocaleFromPath, defaultLocale, type Locale } from '@/lib/i18n/locale'
 
 export function Header() {
   const router = useRouter()
@@ -14,8 +14,9 @@ export function Header() {
 
     // Remove current locale prefix if exists
     let pathWithoutLocale = pathname || '/'
-    if (pathname?.startsWith('/en/')) {
-      pathWithoutLocale = pathname.replace('/en', '') || '/'
+    const localePrefix = `/${currentLocale}`
+    if (currentLocale !== defaultLocale && pathWithoutLocale.startsWith(localePrefix)) {
+      pathWithoutLocale = pathWithoutLocale.slice(localePrefix.length) || '/'
     }
 
     // Add new locale prefix using helper
