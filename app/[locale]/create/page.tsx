@@ -378,6 +378,10 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
               </Button>
             </div>
 
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+              {t('privacy.creator', currentLocale)}
+            </div>
+
             {error && (
               <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 text-sm flex items-start gap-3 animate-slide-up">
                 <span className="text-lg">⚠️</span>

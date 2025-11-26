@@ -14,6 +14,7 @@ export function Footer({ locale }: FooterProps) {
   const pathname = usePathname()
   const currentLocale = locale || getLocaleFromPath(pathname || '/')
   const homePath = getLocalePath('/', currentLocale)
+  const privacyPath = getLocalePath('/privacy', currentLocale)
 
   return (
     <footer className="relative mt-auto border-t border-gray-200 bg-gradient-to-br from-gray-50 via-white to-primary-light/30 overflow-hidden">
@@ -60,6 +61,12 @@ export function Footer({ locale }: FooterProps) {
               <span className="h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden />
               {t('footer.inspired', currentLocale)}
             </a>
+            <Link
+              href={privacyPath}
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-700 ring-1 ring-gray-200 shadow-sm hover:text-primary hover:ring-primary/40 transition-all"
+            >
+              {t('footer.privacy', currentLocale)}
+            </Link>
           </div>
         </div>
       </div>

@@ -85,6 +85,7 @@ export const translations = {
     'footer.inspired': 'chouseisan.com-оос санаа авав',
     'footer.madeWith': 'Монголын хуулийн №1 хиймэл оюун',
     'footer.logoAlt': 'huuli.tech лого',
+    'footer.privacy': 'Нууцлал ба бодлого',
 
     // Errors
     'errors.notFound': 'Эвент олдсонгүй',
@@ -97,6 +98,31 @@ export const translations = {
     'edit.button': 'Эвентийг засварлах',
     'edit.title': 'Эвентийг засварлах',
     'edit.save': 'Өөрчлөлтийг хадгалах',
+    'edit.delete': 'Эвентийг устгах',
+    'edit.deleteDescription': 'Энэ эвент болон бүх хариултыг бүрэн устгана. Буцаах боломжгүй.',
+    'edit.deleteConfirm': 'Эвент болон бүх хариултыг устгах уу? Энэ үйлдлийг буцаах боломжгүй.',
+
+    // Privacy
+    'privacy.creator': 'Та оруулсан эвентийн мэдээлэл зөвхөн энэ холбоостой хүмүүст харагдана. Эвэнтийг хүссэн үедээ устгавал бүх огноо болон хариултууд шууд устна.',
+    'privacy.respondent': 'Таны нэр, оролцох боломж энэ холбоостой хүмүүст харагдана. Маркетингт ашиглахгүй, гуравдагч этгээдэд дамжуулахгүй. Зохион байгуулагч эвэнтийг устгавал таны хариулт устна.',
+    'privacyPage.title': 'Нууцлал ба мэдээллийн бодлого',
+    'privacyPage.subtitle': 'uulzah.link дээр таны эвент болон санал асуулгын мэдээллийг аюулгүй, ил тод хадгалж, зөвхөн шаардлагатай хүрээнд ашиглана.',
+    'privacyPage.data.title': 'Бид ямар мэдээлэл хадгалдаг вэ?',
+    'privacyPage.data.events': 'Эвентийн мэдээлэл: гарчиг, тайлбар, боломжит огноо.',
+    'privacyPage.data.responses': 'Хариултууд: оролцогчийн нэр, сонгосон боломжууд, сэтгэгдэл.',
+    'privacyPage.data.fingerprint': 'Зөвхөн засвар хамгаалалтад: эвент үүсгэсэн төхөөрөмжийн ул мөр (fingerprint) – зөвхөн зөвшөөрөгдсөн төхөөрөмжөөр засахад ашиглагдана.',
+    'privacyPage.usage.title': 'Мэдээллийг хэрхэн ашигладаг вэ?',
+    'privacyPage.usage.poll': 'Санал асуулгыг харуулах, хариултыг тооцоолох.',
+    'privacyPage.usage.security': 'Edit холбоос буруу хэрэглэгдэхээс хамгаалах.',
+    'privacyPage.usage.improve': 'Ашиглалтын нийтлэг тоон мэдээллийг сайжруулалт, найдвартайд ашиглана.',
+    'privacyPage.sharing.title': 'Хэн харах вэ?',
+    'privacyPage.sharing.text': 'Эвент болон хариултууд зөвхөн холбоосыг авсан хүмүүст харагдана. Маркетингийн зорилгоор хуваалцахгүй, худалдаалахгүй.',
+    'privacyPage.deletion.title': 'Устгал ба хадгалалт',
+    'privacyPage.deletion.text': 'Edit холбоосоор эвентээ устгавал холбогдох бүх огноо, хариултыг системээс устгана.',
+    'privacyPage.cookies.title': 'Күүки ба гуравдагч тал',
+    'privacyPage.cookies.text': 'Бид гуравдагч этгээдийн маркетингийн күүки ашиглахгүй. Ирээдүйд анализ нэмэх бол бодлогоо шинэчилнэ.',
+    'privacyPage.contact.title': 'Асуулт, холбоо барих',
+    'privacyPage.contact.text': 'Санал, асуулт байвал huuli.tech-ийн багтай холбогдоно уу.',
   },
   en: {
     // Meta
@@ -184,6 +210,7 @@ export const translations = {
     'footer.inspired': 'Inspired by chouseisan.com',
     'footer.madeWith': 'Made with 🧡 by the huuli.tech team',
     'footer.logoAlt': 'huuli.tech logo',
+    'footer.privacy': 'Privacy & Policy',
 
     // Errors
     'errors.notFound': 'Event not found',
@@ -196,6 +223,31 @@ export const translations = {
     'edit.button': 'Edit Event',
     'edit.title': 'Edit Event',
     'edit.save': 'Save Changes',
+    'edit.delete': 'Delete event',
+    'edit.deleteDescription': 'Remove this event and wipe responses. This cannot be undone.',
+    'edit.deleteConfirm': 'Delete this event and all its responses? This action cannot be undone.',
+
+    // Privacy
+    'privacy.creator': 'We only store the event details you enter so people with the link can respond. You can delete the event at any time to remove all dates and responses.',
+    'privacy.respondent': 'Your name and availability are visible to people who have this event link. We do not sell or share your responses for marketing, and the organizer can delete them by removing the event.',
+    'privacyPage.title': 'Privacy & Data Policy',
+    'privacyPage.subtitle': 'How uulzah.link keeps your event and poll data safe, transparent, and only used for scheduling.',
+    'privacyPage.data.title': 'What we collect',
+    'privacyPage.data.events': 'Event details: title, description, and possible dates you enter.',
+    'privacyPage.data.responses': 'Responses: participant name, selected availability, and optional comments.',
+    'privacyPage.data.fingerprint': 'Edit protection only: a device fingerprint to make sure edits come from the creator’s device.',
+    'privacyPage.usage.title': 'How we use it',
+    'privacyPage.usage.poll': 'Show the poll and calculate availability.',
+    'privacyPage.usage.security': 'Guard the edit link from misuse.',
+    'privacyPage.usage.improve': 'Use aggregate usage to improve reliability.',
+    'privacyPage.sharing.title': 'Who can see it',
+    'privacyPage.sharing.text': 'Event details and responses are only visible to people with the link. We do not sell or share your data for marketing.',
+    'privacyPage.deletion.title': 'Deletion & retention',
+    'privacyPage.deletion.text': 'Delete the event with your edit link to remove its dates and responses from our system.',
+    'privacyPage.cookies.title': 'Cookies & third parties',
+    'privacyPage.cookies.text': 'We do not use third-party marketing cookies. If we add analytics in the future, this policy will be updated.',
+    'privacyPage.contact.title': 'Questions or feedback',
+    'privacyPage.contact.text': 'Reach the huuli.tech team for any privacy questions.',
   },
 } as const
 
