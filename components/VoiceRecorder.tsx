@@ -9,7 +9,7 @@ import type { VoiceMeetingData } from '@/lib/types/voice'
 
 interface VoiceRecorderProps {
   locale: Locale
-  onResult: (data: VoiceMeetingData) => void
+  onResult: (data: VoiceMeetingData, transcription: string) => void
   onError: (error: string) => void
   maxDuration?: number // in seconds
 }
@@ -191,7 +191,7 @@ export function VoiceRecorder({
       await new Promise(resolve => setTimeout(resolve, 500))
 
       // Success!
-      onResult(data.data)
+      onResult(data.data, data.transcription || '')
     } catch (err: any) {
       console.error('Failed to process audio:', err)
       onError(err.message || t('event.form.voiceError', locale))

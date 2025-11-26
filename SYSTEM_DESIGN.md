@@ -902,9 +902,6 @@ POSTGRES_URL_NON_POOLING=
 NEXT_PUBLIC_APP_URL=https://uulzah.link
 NEXT_PUBLIC_DEFAULT_LOCALE=mn
 
-# Optional
-SENTRY_DSN=
-VERCEL_ANALYTICS_ID=
 ```
 
 **Development**:
@@ -1234,33 +1231,6 @@ Handled automatically by Vercel:
 - Automatic region selection
 - DDoS protection
 - Health checks
-
-### Monitoring & Alerts
-
-```typescript
-// Sentry integration for error tracking
-// sentry.client.config.ts
-import * as Sentry from '@sentry/nextjs';
-
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 0.1,
-  environment: process.env.VERCEL_ENV,
-  integrations: [
-    new Sentry.BrowserTracing({
-      tracePropagationTargets: ['uulzah.link'],
-    }),
-  ],
-});
-```
-
-**Alert Thresholds**:
-- Error rate > 5%
-- Response time > 3s (p95)
-- Database connection errors
-- Rate limit violations > 100/hour
-
----
 
 ## Security Considerations
 

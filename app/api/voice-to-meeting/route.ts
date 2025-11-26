@@ -51,8 +51,12 @@ const RESPONSE_SCHEMA = {
         required: ['rawText', 'isoDate', 'timeRange'],
       },
     },
+    explanation: {
+      type: 'string',
+      description: 'A fun and detailed explanation of the analysis. If it is a birthday, be very celebratory! Mention the zodiac sign if possible.',
+    },
   },
-  required: ['title', 'description', 'possibleDates'],
+  required: ['title', 'description', 'possibleDates', 'explanation'],
 }
 
 /**
@@ -73,6 +77,7 @@ function generatePrompt(locale: string): string {
 1. Уулзалтын гарчиг олох (жишээ: "Хамтрагчдын уулзалт", "Долоо хоногийн уулзалт")
 2. Тайлбар эсвэл хэлэлцэх асуудал байвал гаргах
 3. Дурдсан огноо болон цагийг олох (жишээ: "маргааш орой", "дараа долоо хоногийн Мягмар")
+4. "explanation" хэсэгт дэлгэрэнгүй, хөгжилтэй тайлбар бичих. Хэрэв төрсөн өдөр бол баярын мэнд хүргэж, зурхайн орд энэ тэрийг дурдаж хөгжилтэй байх.
 
 Огноо хувиргах заавар:
 - "өнөөдөр" = ${todayStr}
@@ -96,6 +101,7 @@ Tasks:
 1. Extract the meeting title (e.g., "Team meeting", "Weekly sync")
 2. Extract description or agenda if mentioned
 3. Extract all mentioned dates and times (e.g., "tomorrow evening", "next Tuesday")
+4. In the "explanation" field, provide a detailed and fun explanation. If it's a birthday, be celebratory and maybe mention the zodiac sign!
 
 Date conversion rules:
 - "өнөөдөр" (today) = ${todayStr}

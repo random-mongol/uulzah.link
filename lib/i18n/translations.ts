@@ -173,5 +173,6 @@ export type TranslationKey = keyof typeof translations.mn
 export type Locale = 'mn' | 'en'
 
 export function t(key: TranslationKey, locale: Locale = 'mn'): string {
-  return translations[locale][key] || key
+  const safeLocale = translations[locale] ? locale : 'mn'
+  return translations[safeLocale]?.[key] || key
 }

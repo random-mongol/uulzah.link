@@ -3,10 +3,11 @@
  */
 
 import type { GeminiConfig } from '@/lib/types/voice'
+import { GoogleGenAI } from '@google/genai'
 
 // Default configuration
 const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com'
-const DEFAULT_MODEL = 'gemini-2.0-flash-exp' // Supports audio input and structured outputs
+const DEFAULT_MODEL = 'gemini-2.5-flash' // Supports audio input and structured outputs
 
 /**
  * Parse and validate Gemini API keys from environment
@@ -110,58 +111,45 @@ export async function transcribeAudio(
   mimeType: string,
   locale: string
 ): Promise<string> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`
+  const ai = new GoogleGenAI({ apiKey: config.apiKey })
 
   const prompt = locale === 'mn'
     ? 'Энэ аудио бичлэгийг Монгол хэл рүү бичвэрлэнэ үү. Зөвхөн хэлсэн үгсийг буцаана уу, нэмэлт тайлбар өгөх шаардлагагүй.'
     : 'Transcribe this audio in Mongolian to text. Return only the spoken words, no additional explanation.'
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          {
-            text: prompt,
-          },
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: audioData,
-            },
-          },
-        ],
+  const contents = [
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType: mimeType,
+        data: audioData,
       },
-    ],
-    generationConfig: {
-      temperature: 0.2,
     },
-  }
+  ]
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  })
+  try {
+    const response = await ai.models.generateContent({
+      model: config.model,
+      contents: contents,
+      config: {
+        temperature: 0.2,
+      },
+    })
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    const error: any = new Error(
-      errorData.error?.message || `Gemini API error: ${response.status} ${response.statusText}`
-    )
-    error.status = response.status
+    const textResponse = response.text
+
+    if (!textResponse) {
+      throw new Error('No transcription from Gemini API')
+    }
+
+    return textResponse.trim()
+  } catch (error: any) {
+    // Wrap error to ensure it has status/message for retry logic
+    if (!error.status && error.response?.status) {
+      error.status = error.response.status
+    }
     throw error
   }
-
-  const data = await response.json()
-  const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-  if (!textResponse) {
-    throw new Error('No transcription from Gemini API')
-  }
-
-  return textResponse.trim()
 }
 
 /**
@@ -173,7 +161,7 @@ export async function analyzeTranscription<T>(
   prompt: string,
   responseSchema: any
 ): Promise<T> {
-  const url = `${config.baseUrl}/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`
+  const ai = new GoogleGenAI({ apiKey: config.apiKey })
 
   const fullPrompt = `${prompt}
 
@@ -184,51 +172,42 @@ ${transcription}
 
 Extract the meeting information from this transcribed text and return it in the specified JSON format.`
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          {
-            text: fullPrompt,
-          },
-        ],
-      },
-    ],
-    generationConfig: {
-      response_mime_type: 'application/json',
-      response_schema: responseSchema,
-      temperature: 0.1,
-    },
-  }
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    const error: any = new Error(
-      errorData.error?.message || `Gemini API error: ${response.status} ${response.statusText}`
-    )
-    error.status = response.status
-    throw error
-  }
-
-  const data = await response.json()
-  const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-  if (!textResponse) {
-    throw new Error('No response from Gemini API')
-  }
-
   try {
-    return JSON.parse(textResponse) as T
-  } catch (err) {
-    console.error('Failed to parse Gemini response:', textResponse)
-    throw new Error('Invalid JSON response from Gemini')
+    const response = await ai.models.generateContent({
+      model: config.model,
+      contents: [
+        {
+          parts: [
+            {
+              text: fullPrompt,
+            },
+          ],
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: responseSchema,
+        temperature: 0.1,
+      },
+    })
+
+    const textResponse = response.text
+
+    if (!textResponse) {
+      throw new Error('No response from Gemini API')
+    }
+
+    try {
+      return JSON.parse(textResponse) as T
+    } catch (err) {
+      console.error('Failed to parse Gemini response:', textResponse)
+      throw new Error('Invalid JSON response from Gemini')
+    }
+  } catch (error: any) {
+    // Wrap error to ensure it has status/message for retry logic
+    if (!error.status && error.response?.status) {
+      error.status = error.response.status
+    }
+    throw error
   }
 }

@@ -24,6 +24,8 @@ export interface VoiceMeetingData {
   description: string | null
   /** List of possible dates/times mentioned */
   possibleDates: VoiceDateOption[]
+  /** Detailed and fun explanation of the analysis */
+  explanation: string
 }
 
 /**

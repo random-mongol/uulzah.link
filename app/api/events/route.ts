@@ -6,19 +6,22 @@ import { generateShortId } from '@/lib/utils/id'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, description, dates, fingerprint } = body
+    const { title, description, dates, fingerprint, locale = 'mn' } = body
+
+    // Helper for localized error messages
+    const getErrorMsg = (mn: string, en: string) => locale === 'mn' ? mn : en
 
     // Validation
-    if (!title || title.length < 3 || title.length > 255) {
+    if (!title || title.trim().length < 3 || title.length > 255) {
       return NextResponse.json(
-        { error: 'Title must be between 3 and 255 characters' },
+        { error: getErrorMsg('Гарчиг 3-аас 255 тэмдэгттэй байх ёстой', 'Title must be between 3 and 255 characters') },
         { status: 400 }
       )
     }
 
-    if (!dates || dates.length === 0) {
+    if (!dates || !Array.isArray(dates) || dates.length === 0) {
       return NextResponse.json(
-        { error: 'At least one date is required' },
+        { error: getErrorMsg('Ядаж нэг огноо сонгох шаардлагатай', 'At least one date is required') },
         { status: 400 }
       )
     }
@@ -32,19 +35,19 @@ export async function POST(request: NextRequest) {
       .from('events')
       .insert({
         id: eventId,
-        title,
-        description: description || null,
+        title: title.trim(),
+        description: description?.trim() || null,
         edit_token: editToken,
         creator_fingerprint: fingerprint || null,
         timezone: 'Asia/Ulaanbaatar',
-      })
+      } as any)
       .select()
-      .single()
+      .single() as any
 
     if (eventError) {
       console.error('Event creation error:', eventError)
       return NextResponse.json(
-        { error: 'Failed to create event' },
+        { error: getErrorMsg('Үйл явдал үүсгэхэд алдаа гарлаа', 'Failed to create event') },
         { status: 500 }
       )
     }
@@ -60,14 +63,14 @@ export async function POST(request: NextRequest) {
 
     const { error: datesError } = await supabase
       .from('event_dates')
-      .insert(eventDates)
+      .insert(eventDates as any)
 
     if (datesError) {
       console.error('Event dates creation error:', datesError)
       // Rollback event creation
       await supabase.from('events').delete().eq('id', event.id)
       return NextResponse.json(
-        { error: 'Failed to create event dates' },
+        { error: getErrorMsg('Огноо үүсгэхэд алдаа гарлаа', 'Failed to create event dates') },
         { status: 500 }
       )
     }

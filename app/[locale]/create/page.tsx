@@ -53,6 +53,8 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [voiceSuccess, setVoiceSuccess] = useState(false)
+  const [transcription, setTranscription] = useState('')
+  const [explanation, setExplanation] = useState('')
 
   const addDate = () => {
     // Add next day with the same time as the last option
@@ -122,9 +124,11 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
   }
 
   // Handle voice recording result
-  const handleVoiceResult = (data: VoiceMeetingData) => {
+  const handleVoiceResult = (data: VoiceMeetingData, text: string) => {
     // Clear any previous errors
     setError('')
+    setTranscription(text)
+    setExplanation(data.explanation || '')
 
     // Fill in title
     if (data.title) {
@@ -236,6 +240,7 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
           description,
           dates,
           fingerprint,
+          locale: currentLocale,
         }),
       })
 
@@ -288,9 +293,30 @@ export default function CreateEventPage({ params }: { params: Promise<{ locale: 
             </div>
 
             {voiceSuccess && (
-              <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-700 text-sm flex items-start gap-3 animate-slide-up">
-                <span className="text-lg">✅</span>
-                <span>{t('event.form.voiceSuccess', currentLocale)}</span>
+              <div className="space-y-4 mb-6">
+                <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-700 text-sm flex items-start gap-3 animate-slide-up">
+                  <span className="text-lg">✅</span>
+                  <span>{t('event.form.voiceSuccess', currentLocale)}</span>
+                </div>
+
+                {/* Transcription & Analysis */}
+                <div className="bg-white border rounded-lg p-4 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-1">
+                      {currentLocale === 'mn' ? 'Таны хэлсэн үг:' : 'Transcription:'}
+                    </h4>
+                    <p className="text-gray-600 text-sm italic">"{transcription}"</p>
+                  </div>
+                  
+                  {explanation && (
+                    <div className="pt-3 border-t">
+                      <h4 className="text-sm font-semibold text-blue-700 mb-1">
+                        {currentLocale === 'mn' ? 'AI Тайлбар:' : 'AI Analysis:'}
+                      </h4>
+                      <p className="text-blue-800 text-sm">{explanation}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
