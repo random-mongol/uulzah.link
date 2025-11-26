@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase/client'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const eventId = params.eventId
+    const { eventId } = await params
     const body = await request.json()
     const { editToken, fingerprint } = body
 

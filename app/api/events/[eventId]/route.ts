@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase/client'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const eventId = params.eventId
+    const { eventId } = await params
 
     // Get event details
     const { data: event, error: eventError } = await supabase
@@ -62,10 +62,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const eventId = params.eventId
+    const { eventId } = await params
     const editToken = request.headers.get('x-edit-token')
     const body = await request.json()
     const { title, description } = body

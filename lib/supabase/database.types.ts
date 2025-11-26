@@ -64,6 +64,7 @@ export interface Database {
           view_count?: number
           response_count?: number
         }
+        Relationships: []
       }
       event_dates: {
         Row: {
@@ -93,6 +94,7 @@ export interface Database {
           display_order?: number
           created_at?: string
         }
+        Relationships: []
       }
       participants: {
         Row: {
@@ -125,6 +127,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       responses: {
         Row: {
@@ -148,6 +151,7 @@ export interface Database {
           status?: 'yes' | 'no' | 'maybe'
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: {
@@ -157,6 +161,9 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
       [_ in never]: never
     }
   }

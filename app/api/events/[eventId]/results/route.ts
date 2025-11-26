@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase/client'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const eventId = params.eventId
+    const { eventId } = await params
 
     // Get event details
     const { data: event, error: eventError } = await supabase

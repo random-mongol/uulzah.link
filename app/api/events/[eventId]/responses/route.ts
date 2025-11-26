@@ -4,10 +4,10 @@ import { generateSecureToken } from '@/lib/utils/crypto'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const eventId = params.eventId
+    const { eventId } = await params
     const body = await request.json()
     const { participantName, comment, responses } = body
 
@@ -22,7 +22,7 @@ export async function POST(
     // Check if event exists
     const { data: event, error: eventError } = await supabase
       .from('events')
-      .select('id')
+      .select('id, response_count')
       .eq('id', eventId)
       .is('deleted_at', null)
       .single()
